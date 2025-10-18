@@ -1,0 +1,59 @@
+package com.Wisdom_Nurture_Garden.demo.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                // 完全关闭 CSRF，避免 POST 被拦截
+                .csrf(csrf -> csrf.disable())
+
+                // 放行登录和注册接口
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/users/login", "/api/users/register").permitAll()
+                        .anyRequest().permitAll() // （调试阶段可先放行所有接口）
+                )
+
+                // 禁用表单登录和 HTTP Basic（我们用 JWT）
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable());
+
+        return http.build();
+    }
+}
+
+
+/* 数据库语句存放在此
+CREATE TABLE binding (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    child_id INT NOT NULL,
+    elder_id INT NOT NULL,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_child FOREIGN KEY (child_id) REFERENCES users(id),
+//确定外键绑定
+    CONSTRAINT fk_elder FOREIGN KEY (elder_id) REFERENCES users(id)
+//确定外键绑定
+);
+
+ALTER TABLE binding ADD UNIQUE KEY unique_bind (child_id, elder_id);
+//绑定关系唯一
+
+CREATE TABLE checkin (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    elder_id INT NOT NULL,
+    mood TINYINT NOT NULL,
+    sleep_quality TINYINT NOT NULL,
+    appetite TINYINT NOT NULL,
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_checkin_elder FOREIGN KEY (elder_id) REFERENCES users(id)
+);
+
+//增加性别列
+alter table users add column gender varchar(10) after name;
+ */
