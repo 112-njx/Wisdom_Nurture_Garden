@@ -2,6 +2,7 @@ package com.Wisdom_Nurture_Garden.demo.controller;
 
 import com.Wisdom_Nurture_Garden.demo.entity.Checkin;
 import com.Wisdom_Nurture_Garden.demo.service.CheckinService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,17 +15,17 @@ public class CheckinController {
 
     @Autowired
     private CheckinService checkinService;
-
-    //老人端提交健康数据
     @PostMapping
-    public String submit(@RequestBody Checkin checkin) {
-        boolean success = checkinService.submitCheckin(checkin);
-        return success ? "打卡成功" : "打卡失败";
-    }
+    public String submit(@RequestBody Checkin checkin, HttpServletRequest request) {
+        Integer elderId = (Integer) request.getAttribute("userId");
+        checkin.setElderId(elderId); // 覆盖前端传来的 id（防止恶意修改）
 
-    //子女端查看绑定老人当天打卡数据
-    @GetMapping("/today/{elderId}")
-    public List<Checkin> getToday(@PathVariable int elderId) {
-        return checkinService.getTodayCheckinByElder(elderId);
+        boolean success = checkinService.submitCheckin(checkin);
+        return success ? "打卡成功" : "打卡失败或今天已打过卡";
+    }
+    @GetMapping("/today")
+    public List<Checkin> getToday(HttpServletRequest request) {
+        Integer childId = (Integer) request.getAttribute("userId");
+        return checkinService.getTodayCheckinByChild(childId);
     }
 }

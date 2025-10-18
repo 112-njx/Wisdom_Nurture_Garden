@@ -35,7 +35,8 @@ public class UsersServiceImpl implements UsersService {
         }
 
         // 登录成功生成 token
-        return JwtUtil.generateToken(user.getName(), user.getRole());
+        return JwtUtil.generateToken(user.getId(), user.getName(), user.getRole());
+
     }
 
     @Override

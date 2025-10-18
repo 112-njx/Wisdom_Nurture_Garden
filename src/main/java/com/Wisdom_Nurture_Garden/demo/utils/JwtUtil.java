@@ -11,8 +11,9 @@ public class JwtUtil {
     private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor("MySuperSecretKeyForJwtTokenWisdomGarden".getBytes());
     private static final long EXPIRATION_TIME = 30 * 24 * 60 * 60 * 1000L; // 一个月
 
-    public static String generateToken(String username, int role) {
+    public static String generateToken(Integer id, String username, int role) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("id", id);
         claims.put("role", role);
 
         return Jwts.builder()
@@ -23,6 +24,7 @@ public class JwtUtil {
                 .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     public static Claims parseToken(String token) {
         return Jwts.parserBuilder()

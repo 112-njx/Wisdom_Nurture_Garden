@@ -57,3 +57,5 @@ CREATE TABLE checkin (
 //增加性别列
 alter table users add column gender varchar(10) after name;
  */
+
+//Bearer <上一步获取的token> eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoxLCJpZCI6Niwic3ViIjoiY2hpbGQwMDEiLCJpYXQiOjE3NjA3NjQ5MDUsImV4cCI6MTc2MzM1NjkwNX0.Y_i4b5pNbBUxu79ZQ-meM4CsgfNl-4pVucEsBsFLwAE

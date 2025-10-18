@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface CheckinService {
     boolean submitCheckin(Checkin checkin);
-    List<Checkin> getTodayCheckinByElder(Integer elderId);
+    List<Checkin> getTodayCheckinByChild(Integer elderId);
 }
