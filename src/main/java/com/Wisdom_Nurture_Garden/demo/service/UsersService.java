@@ -8,4 +8,7 @@ public interface UsersService {
 
     // 注册功能
     boolean register(Users user);
+
+    //微信登录
+    Users wechatLogin(String appid, String secret, String code);
 }

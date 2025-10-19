@@ -1,6 +1,7 @@
 package com.Wisdom_Nurture_Garden.demo.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,16 @@ public class Users {
     private String img;
     private Integer role;
     private String createTime;
+    @TableField(value = "openid")
+    private String openid;
+
+    public String getOpenid() {
+        return openid;
+    }
+
+    public void setOpenid(String openid) {
+        this.openid = openid;
+    }
 
     public int getGender() {
         return gender;
