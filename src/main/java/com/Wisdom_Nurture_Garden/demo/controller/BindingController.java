@@ -18,7 +18,7 @@ public class BindingController {
     // 子女绑定老人
     @PostMapping
     public String bind(@RequestBody BindRequest request, HttpServletRequest httpRequest) {
-        Integer childId = (Integer) httpRequest.getAttribute("userId"); // ✅ 从 token 获取
+        Integer childId = (Integer) httpRequest.getAttribute("userId"); // 从 token 获取
         boolean success = bindingService.bindElder(childId, request.getElderName(), request.getElderPassword());
         return success ? "绑定成功" : "绑定失败或已绑定";
     }
