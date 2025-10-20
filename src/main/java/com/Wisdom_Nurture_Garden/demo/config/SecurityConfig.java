@@ -59,3 +59,15 @@ alter table users add column gender varchar(10) after name;
  */
 
 //Bearer <上一步获取的token> eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoxLCJpZCI6Niwic3ViIjoiY2hpbGQwMDEiLCJpYXQiOjE3NjA3NjQ5MDUsImV4cCI6MTc2MzM1NjkwNX0.Y_i4b5pNbBUxu79ZQ-meM4CsgfNl-4pVucEsBsFLwAE
+
+
+
+//CREATE TABLE help_request (
+//    id INT AUTO_INCREMENT PRIMARY KEY,
+//    elder_id INT NOT NULL,
+//    child_id INT NOT NULL,
+//    message VARCHAR(255),
+//    create_time DATETIME,
+//    FOREIGN KEY (elder_id) REFERENCES users(id),
+//    FOREIGN KEY (child_id) REFERENCES users(id)
+//);
