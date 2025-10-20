@@ -18,41 +18,59 @@ public class WeChatLoginController {
     @Value("wx93e5811a37775074")
     private String appid;
 
-    @Value("${wechat.secret}")
+    @Value("d99885b18d66206a2b845f02731e445a")
     private String secret;
 
     @Autowired
     private UsersService usersService;
 
     @PostMapping("/login")
-    public Map<String, Object> wechatLogin(@RequestBody Map<String, String> body) {
-        String code = body.get("code");
+    public Map<String, Object> wechatLogin(@RequestBody Map<String, Object> body) {
+        String code = (String) body.get("code");
+        String nickname = (String) body.get("nickname");
+        String avatarUrl = (String) body.get("avatarUrl");
+
         Map<String, Object> result = new HashMap<>();
 
         if (code == null || code.isEmpty()) {
             result.put("code", 400);
-            result.put("message", "code 不能为空");
+            result.put("message", "code不能为空");
             return result;
         }
 
-        // 调用 service 做微信换取 openid + 用户处理
-        Users user = usersService.wechatLogin(appid, secret, code);
+        Users user = usersService.wechatLogin(appid, secret, code, nickname, avatarUrl);
         if (user == null) {
             result.put("code", 500);
             result.put("message", "微信登录失败");
             return result;
         }
 
-        // 生成 token
         String token = JwtUtil.generateToken(user.getId(), user.getName(), user.getRole());
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("token", token);
-        data.put("user", user);  // 注意：不要暴露敏感字段如 password
 
         result.put("code", 200);
         result.put("message", "登录成功");
+        Map<String, Object> data = new HashMap<>();
+        data.put("token", token);
+        data.put("user", user);
         result.put("data", data);
+
         return result;
     }
+
+    // 微信用户完善信息接口（绑定姓名、密码、角色）
+    @PostMapping("/update")
+    public Map<String, Object> updateUser(@RequestBody Users user) {
+        Map<String, Object> result = new HashMap<>();
+
+        boolean success = usersService.updateUserInfo(user);
+        if (success) {
+            result.put("code", 200);
+            result.put("message", "信息完善成功");
+        } else {
+            result.put("code", 400);
+            result.put("message", "更新失败");
+        }
+        return result;
+    }
+
 }

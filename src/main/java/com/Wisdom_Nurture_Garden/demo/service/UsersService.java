@@ -10,5 +10,7 @@ public interface UsersService {
     boolean register(Users user);
 
     //微信登录
-    Users wechatLogin(String appid, String secret, String code);
+    Users wechatLogin(String appid, String secret, String code,String nickname, String avatarUrl);
+
+    boolean updateUserInfo(Users user);
 }

@@ -64,37 +64,54 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
-    public Users wechatLogin(String appid, String secret, String code) {
+    public Users wechatLogin(String appid, String secret, String code, String nickname, String avatarUrl) {
         String url = "https://api.weixin.qq.com/sns/jscode2session"
                 + "?appid=" + appid
                 + "&secret=" + secret
                 + "&js_code=" + code
                 + "&grant_type=authorization_code";
 
-        Map<String, Object> wxRes = HttpClientUtil.getForMap(url);  // 要实现 HTTP 请求并把 JSON 转为 Map
+        Map<String, Object> wxRes = HttpClientUtil.getForMap(url);
         String openid = (String) wxRes.get("openid");
-        String sessionKey = (String) wxRes.get("session_key");
-        if (openid == null) {
-            // 失败
-            return null;
-        }
+        if (openid == null) return null;
 
-        // 查找用户是否存在
+        // 查询是否已有用户
         QueryWrapper<Users> query = new QueryWrapper<>();
         query.eq("openid", openid);
         Users user = usersMapper.selectOne(query);
 
-        // 不存在，则创建新用户
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
         if (user == null) {
             user = new Users();
-            user.setName("wx_" + openid.substring(openid.length()-6));  // 你可按规则生成默认用户名
-            user.setPassword("");  // 微信登录暂时无密码
-            user.setImg("");       // 可设置默认头像
-            user.setRole(1);       // 或你自己决定是子女还是老人，可能需让用户选择
             user.setOpenid(openid);
-            // 设置 create_time / update_time 等
+            user.setName(nickname != null ? nickname : "wx_user_" + openid.substring(openid.length() - 6));
+            user.setImg(avatarUrl != null ? avatarUrl : "");
+            user.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes())); // 默认密码
+            user.setRole(0); // 未分类
+            user.setCreateTime(now);
+            user.setUpdateTime(now);
             usersMapper.insert(user);
+        } else {
+            // 更新头像和昵称（微信资料更新）
+            user.setName(nickname);
+            user.setImg(avatarUrl);
+            user.setUpdateTime(now);
+            usersMapper.updateById(user);
         }
         return user;
+    }
+
+    @Override
+    public boolean updateUserInfo(Users user) {
+        Users dbUser = usersMapper.selectById(user.getId());
+        if (dbUser == null) return false;
+
+        dbUser.setName(user.getName());
+        dbUser.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
+        dbUser.setRole(user.getRole());
+        dbUser.setUpdateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+        return usersMapper.updateById(dbUser) > 0;
     }
 }
