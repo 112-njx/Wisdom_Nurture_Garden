@@ -5,56 +5,60 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.FileImageOutputStream;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/upload")
 public class ImageUploadController {
 
-    @Value("D:/Wisdom_Nurture_Garden/demo/demo/Pictures")
+    @Value("D:/Wisdom_Nurture_Garden/demo/demo/Pictures/")
     private String uploadDir;
 
-    @PostMapping("/image")
+    @PostMapping("/api/upload/image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
             if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File is empty");
+                return ResponseEntity.badRequest().body("文件为空");
             }
 
-            File dir = new File(uploadDir);
-            if (!dir.exists()) dir.mkdirs();
+            String uploadDir = "D:/Wisdom_Nurture_Garden/demo/demo/Pictures/";
+            Files.createDirectories(Path.of(uploadDir));
 
-            String newFileName = UUID.randomUUID() + ".webp";
-            File webpFile = new File(uploadDir, newFileName);
+            // 原文件名
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || !originalFilename.contains(".")) {
+                return ResponseEntity.badRequest().body("文件名不合法");
+            }
 
+            // 检查格式
+            String ext = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+            if (!List.of("jpg", "jpeg", "png").contains(ext)) {
+                return ResponseEntity.badRequest().body("仅支持 JPG / PNG 图片");
+            }
+
+            // 读入图片内容
             BufferedImage image = ImageIO.read(file.getInputStream());
-
-            ImageWriter writer = ImageIO.getImageWritersByMIMEType("image/webp").next();
-            try (FileImageOutputStream output = new FileImageOutputStream(webpFile)) {
-                writer.setOutput(output);
-                ImageWriteParam param = writer.getDefaultWriteParam();
-                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                param.setCompressionQuality(0.8f);
-                writer.write(null, new IIOImage(image, null, null), param);
-            } finally {
-                writer.dispose();
+            if (image == null) {
+                return ResponseEntity.badRequest().body("无法解析图片，请检查格式");
             }
 
-            String url = "http://localhost:8080/Wisdom_Nurture_Garden/demo/demo/Pictures" + newFileName;
-            return ResponseEntity.ok(url);
+            // 保存文件
+            String newFileName = UUID.randomUUID() + "." + ext;
+            Path filePath = Path.of(uploadDir, newFileName);
+            ImageIO.write(image, ext, filePath.toFile());
 
-        } catch (IOException e) {
+            return ResponseEntity.ok("上传成功，路径：" + filePath);
+
+        } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Upload failed: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("上传失败：" + e.getMessage());
         }
     }
+
 }
 
