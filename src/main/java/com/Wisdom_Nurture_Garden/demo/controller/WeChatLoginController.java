@@ -15,10 +15,10 @@ import java.util.Map;
 @CrossOrigin
 public class WeChatLoginController {
 
-    @Value("wx93e5811a37775074")
+    @Value("${wechat.appid}")
     private String appid;
 
-    @Value("d99885b18d66206a2b845f02731e445a")
+    @Value("${wechat.secret}")
     private String secret;
 
     @Autowired
@@ -27,7 +27,8 @@ public class WeChatLoginController {
     @PostMapping("/login")
     public Map<String, Object> wechatLogin(@RequestBody Map<String, Object> body) {
         String code = (String) body.get("code");
-        String nickname = (String) body.get("nickname");
+        // 前端可能用 nickName（驼峰）或 nickname（小写），做兼容
+        String nickname = (String) (body.containsKey("nickName") ? body.get("nickName") : body.get("nickname"));
         String avatarUrl = (String) body.get("avatarUrl");
 
         Map<String, Object> result = new HashMap<>();
@@ -41,7 +42,7 @@ public class WeChatLoginController {
         Users user = usersService.wechatLogin(appid, secret, code, nickname, avatarUrl);
         if (user == null) {
             result.put("code", 500);
-            result.put("message", "微信登录失败");
+            result.put("message", "微信登录失败（请检查 code 或 后端日志）");
             return result;
         }
 
@@ -57,7 +58,6 @@ public class WeChatLoginController {
         return result;
     }
 
-    // 微信用户完善信息接口（绑定姓名、密码、角色）
     @PostMapping("/update")
     public Map<String, Object> updateUser(@RequestBody Users user) {
         Map<String, Object> result = new HashMap<>();
@@ -72,5 +72,4 @@ public class WeChatLoginController {
         }
         return result;
     }
-
 }

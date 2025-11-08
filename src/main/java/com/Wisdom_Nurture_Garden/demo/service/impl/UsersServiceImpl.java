@@ -62,9 +62,9 @@ public class UsersServiceImpl implements UsersService {
         // 插入数据库
         return usersMapper.insert(user) > 0;
     }
-
     @Override
     public Users wechatLogin(String appid, String secret, String code, String nickname, String avatarUrl) {
+        // 1. 调微信 jscode2session
         String url = "https://api.weixin.qq.com/sns/jscode2session"
                 + "?appid=" + appid
                 + "&secret=" + secret
@@ -72,10 +72,28 @@ public class UsersServiceImpl implements UsersService {
                 + "&grant_type=authorization_code";
 
         Map<String, Object> wxRes = HttpClientUtil.getForMap(url);
-        String openid = (String) wxRes.get("openid");
-        if (openid == null) return null;
+        if (wxRes == null) {
+            // 网络请求失败或解析失败
+            return null;
+        }
 
-        // 查询是否已有用户
+        // 检查 errcode
+        if (wxRes.containsKey("errcode")) {
+            Object errcode = wxRes.get("errcode");
+            Object errmsg = wxRes.get("errmsg");
+            System.err.println("WeChat jscode2session error: errcode=" + errcode + ", errmsg=" + errmsg);
+            return null;
+        }
+
+        String openid = (String) wxRes.get("openid");
+        String sessionKey = (String) wxRes.get("session_key");
+
+        if (openid == null || openid.isEmpty()) {
+            System.err.println("WeChat jscode2session returned no openid: " + wxRes);
+            return null;
+        }
+
+        // 2. 查询是否已有用户
         QueryWrapper<Users> query = new QueryWrapper<>();
         query.eq("openid", openid);
         Users user = usersMapper.selectOne(query);
@@ -83,24 +101,36 @@ public class UsersServiceImpl implements UsersService {
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         if (user == null) {
+            // 注册新用户（你可以调整默认字段）
             user = new Users();
             user.setOpenid(openid);
-            user.setName(nickname != null ? nickname : "wx_user_" + openid.substring(openid.length() - 6));
+            user.setName(nickname != null ? nickname : ("wx_user_" + openid.substring(Math.max(0, openid.length() - 6))));
             user.setImg(avatarUrl != null ? avatarUrl : "");
-            user.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes())); // 默认密码
-            user.setRole(0); // 未分类
+            user.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes())); // 默认密码（可在前端提示修改）
+            user.setRole(0); // 未分类/普通用户
             user.setCreateTime(now);
             user.setUpdateTime(now);
             usersMapper.insert(user);
         } else {
-            // 更新头像和昵称（微信资料更新）
-            user.setName(nickname);
-            user.setImg(avatarUrl);
-            user.setUpdateTime(now);
-            usersMapper.updateById(user);
+            // 更新昵称/头像（如果提供）
+            boolean changed = false;
+            if (nickname != null && !nickname.equals(user.getName())) {
+                user.setName(nickname);
+                changed = true;
+            }
+            if (avatarUrl != null && !avatarUrl.equals(user.getImg())) {
+                user.setImg(avatarUrl);
+                changed = true;
+            }
+            if (changed) {
+                user.setUpdateTime(now);
+                usersMapper.updateById(user);
+            }
         }
+
         return user;
     }
+
 
     @Override
     public boolean updateUserInfo(Users user) {
