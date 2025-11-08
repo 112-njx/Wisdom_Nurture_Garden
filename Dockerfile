@@ -11,9 +11,6 @@ COPY src ./src
 # 打包项目（跳过测试）
 RUN mvn clean package -DskipTests
 
-# ==============================
-# 运行阶段：使用轻量化 JRE 运行 Jar
-# ==============================
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 
@@ -22,6 +19,17 @@ COPY --from=builder /app/target/*.jar app.jar
 
 # 设置时区为东八区（可选）
 ENV TZ=Asia/Shanghai
+
+# 更新 CA 证书以信任微信证书
+RUN apt-get update && \
+    apt-get install -y ca-certificates wget && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# 手动更新到最新的 CA 证书包（更彻底）
+RUN wget -O /tmp/cacert.pem https://curl.se/ca/cacert.pem && \
+    keytool -import -noprompt -trustcacerts -file /tmp/cacert.pem -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit && \
+    rm /tmp/cacert.pem
 
 # 暴露端口（Spring Boot 默认 8080）
 EXPOSE 8080

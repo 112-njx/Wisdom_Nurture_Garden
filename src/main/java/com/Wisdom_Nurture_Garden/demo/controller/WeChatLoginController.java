@@ -27,7 +27,6 @@ public class WeChatLoginController {
     @PostMapping("/login")
     public Map<String, Object> wechatLogin(@RequestBody Map<String, Object> body) {
         String code = (String) body.get("code");
-        // 前端可能用 nickName（驼峰）或 nickname（小写），做兼容
         String nickname = (String) (body.containsKey("nickName") ? body.get("nickName") : body.get("nickname"));
         String avatarUrl = (String) body.get("avatarUrl");
 
