@@ -45,6 +45,14 @@ public class WeChatLoginController {
             return result;
         }
 
+        // 设置默认值：password 为 "123456" 和 role 为 0
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            user.setPassword("123456");
+        }
+        if (user.getRole() == null) {
+            user.setRole(0);
+        }
+
         String token = JwtUtil.generateToken(user.getId(), user.getName(), user.getRole());
 
         result.put("code", 200);
